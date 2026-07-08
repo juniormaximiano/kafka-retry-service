@@ -3,9 +3,7 @@ package com.juno.kafkaretryservice.store;
 import com.juno.kafkaretryservice.domain.Request;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -22,8 +20,8 @@ public class RequestStore {
         return requests.get(id);
     }
 
-    public Collection<Request> findAll() {
-        return requests.values();
+    public List<Request> findAll() {
+        return new ArrayList<>(requests.values());
     }
 
 }

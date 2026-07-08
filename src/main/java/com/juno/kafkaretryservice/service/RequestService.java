@@ -1,10 +1,11 @@
 package com.juno.kafkaretryservice.service;
 
 import com.juno.kafkaretryservice.domain.Request;
+import com.juno.kafkaretryservice.dto.RequestCreateDTO;
 import com.juno.kafkaretryservice.store.RequestStore;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -16,8 +17,19 @@ public class RequestService {
         this.requestStore = requestStore;
     }
 
-    public Request createRequest(String payload) {
-        Request request = new Request(payload);
+    public Request createRequest(RequestCreateDTO dto) {
+        Request request = new Request(
+                dto.accessionNumber(),
+                dto.studyDate(),
+                dto.studyDescription(),
+                dto.modality(),
+                dto.patientId(),
+                dto.patientName(),
+                dto.patientBirthDate(),
+                dto.patientSex(),
+                dto.reportPdfBase64()
+        );
+
         return requestStore.save(request);
     }
 
@@ -25,7 +37,7 @@ public class RequestService {
         return requestStore.findById(id);
     }
 
-    public Collection<Request> findAll() {
+    public List<Request> findAll() {
         return requestStore.findAll();
     }
 
