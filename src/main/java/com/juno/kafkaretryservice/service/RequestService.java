@@ -2,6 +2,8 @@ package com.juno.kafkaretryservice.service;
 
 import com.juno.kafkaretryservice.domain.Request;
 import com.juno.kafkaretryservice.dto.RequestCreateDTO;
+import com.juno.kafkaretryservice.event.RequestCreatedEvent;
+import com.juno.kafkaretryservice.producer.RequestProducer;
 import com.juno.kafkaretryservice.store.RequestStore;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +15,12 @@ public class RequestService {
 
     private final RequestStore requestStore;
 
-    public RequestService(RequestStore requestStore) {
+    private final RequestProducer requestProducer;
+
+
+    public RequestService(RequestStore requestStore, RequestProducer requestProducer) {
         this.requestStore = requestStore;
+        this.requestProducer = requestProducer;
     }
 
     public Request createRequest(RequestCreateDTO dto) {
@@ -30,7 +36,17 @@ public class RequestService {
                 dto.reportPdfBase64()
         );
 
-        return requestStore.save(request);
+        Request savedRequest = requestStore.save(request);
+
+        RequestCreatedEvent event = new RequestCreatedEvent(
+                savedRequest.getId(),
+                savedRequest.getAccessionNumber(),
+                savedRequest.getPatientId()
+        );
+
+        requestProducer.send(event);
+
+        return savedRequest;
     }
 
     public Request findById(UUID id) {
