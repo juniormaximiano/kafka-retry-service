@@ -30,11 +30,17 @@ public class ProcessingService {
         Request request = requestStore.findById(event.requestId());
 
         request.setStatus(RequestStatus.PROCESSING);
-        System.out.println("Processando tentativa...");
-        throw new RuntimeException("Erro simulado no processamento");
-//        request.setStatus(RequestStatus.SUCCESSFUL);
-//        request.setUpdatedAt(LocalDateTime.now());
 
+        request.setAttempts(request.getAttempts() + 1);
+
+        System.out.println("Processando tentativa: " + request.getAttempts());
+
+        if (request.getAttempts() < 3) {
+            throw new RuntimeException("Erro simulado no processamento");
+        }
+
+        request.setStatus(RequestStatus.SUCCESSFUL);
+        request.setUpdatedAt(LocalDateTime.now());
     }
 
 }
