@@ -33,7 +33,8 @@ public class RequestService {
                 dto.patientName(),
                 dto.patientBirthDate(),
                 dto.patientSex(),
-                dto.reportPdfBase64()
+                dto.reportPdfBase64(),
+                dto.simulateFailure()
         );
 
         Request savedRequest = requestStore.save(request);

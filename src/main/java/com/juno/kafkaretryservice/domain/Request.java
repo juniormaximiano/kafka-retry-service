@@ -20,9 +20,18 @@ public class Request {
     private LocalDate patientBirthDate;
     private String patientSex;
     private String reportPdfBase64;
+    private boolean simulateFailure;
 
     public String getAccessionNumber() {
         return accessionNumber;
+    }
+
+    public boolean isSimulateFailure() {
+        return simulateFailure;
+    }
+
+    public void setSimulateFailure(boolean simulateFailure) {
+        this.simulateFailure = simulateFailure;
     }
 
     public void setAccessionNumber(String accessionNumber) {
@@ -142,7 +151,8 @@ public class Request {
             String patientName,
             LocalDate patientBirthDate,
             String patientSex,
-            String reportPdfBase64
+            String reportPdfBase64,
+            boolean simulateFailure
     ) {
         this.id = UUID.randomUUID();
         this.accessionNumber = accessionNumber;
@@ -158,6 +168,7 @@ public class Request {
         this.attempts = 0;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.simulateFailure = simulateFailure;
     }
 
 }

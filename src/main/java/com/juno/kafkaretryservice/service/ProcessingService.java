@@ -5,6 +5,7 @@ import com.juno.kafkaretryservice.domain.RequestStatus;
 import com.juno.kafkaretryservice.event.RequestCreatedEvent;
 import com.juno.kafkaretryservice.store.RequestStore;
 import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +20,10 @@ public class ProcessingService {
         this.requestStore = requestStore;
     }
 
-
     @Retryable(
             maxAttempts = 3,
             retryFor = RuntimeException.class,
-            backoff = @Backoff(delay = 1000)
+            backoff = @Backoff(delay = 10000)
     )
     public void process(RequestCreatedEvent event) {
 
@@ -32,15 +32,40 @@ public class ProcessingService {
         request.setStatus(RequestStatus.PROCESSING);
 
         request.setAttempts(request.getAttempts() + 1);
+        request.setUpdatedAt(LocalDateTime.now());
 
-        System.out.println("Processando tentativa: " + request.getAttempts());
+        System.out.println(
+                ">> Requisição " + request.getAccessionNumber()
+                        + " | Tentativa: " + request.getAttempts()
+                        + " | Falha simulada: " + request.isSimulateFailure()
+        );
 
-        if (request.getAttempts() < 3) {
-            throw new RuntimeException("Erro simulado no processamento");
-        }
+        executarProcessamento(request);
 
         request.setStatus(RequestStatus.SUCCESSFUL);
         request.setUpdatedAt(LocalDateTime.now());
+
+
+    }
+
+
+    private void executarProcessamento(Request request) {
+
+        if (request.isSimulateFailure()) {
+            throw new RuntimeException("Erro simulado no processamento");
+        }
+    }
+
+
+    @Recover
+    public void recover(RuntimeException e, RequestCreatedEvent event) {
+
+        Request request = requestStore.findById(event.requestId());
+
+        request.setStatus(RequestStatus.FAILED);
+        request.setUpdatedAt(LocalDateTime.now());
+
+        System.out.println("Processamento falhou definitivamente: " + e.getMessage());
     }
 
 }

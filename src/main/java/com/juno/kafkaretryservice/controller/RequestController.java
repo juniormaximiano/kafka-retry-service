@@ -33,5 +33,14 @@ public class RequestController {
         return requestService.findById(id);
     }
 
+    @PostMapping("/batch")
+    public List<Request> createBatch(
+            @RequestBody List<RequestCreateDTO> requests
+    ) {
+        return requests.stream()
+                .map(requestService::createRequest)
+                .toList();
+    }
+
 
 }

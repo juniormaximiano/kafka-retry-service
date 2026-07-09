@@ -31,7 +31,9 @@ public record RequestCreateDTO(
         @NotBlank
         String patientSex,
 
-        String reportPdfBase64
+        String reportPdfBase64,
+
+        boolean simulateFailure
 
 ) {
 }
