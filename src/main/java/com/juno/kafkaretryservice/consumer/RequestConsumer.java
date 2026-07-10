@@ -10,19 +10,17 @@ public class RequestConsumer {
 
     private final ProcessingService processingService;
 
-
     public RequestConsumer(ProcessingService processingService) {
         this.processingService = processingService;
     }
 
-    @KafkaListener(topics = "request-created-topic", groupId = "kafka-retry-service")
+    @KafkaListener(
+            topics = "request-created-topic",
+            groupId = "kafka-retry-service"
+    )
     public void consume(RequestCreatedEvent event) {
-        try {
-            processingService.process(event);
-        } catch (Exception e) {
-            System.out.println("Falha após tentativas: " + e.getMessage());
-        }
+
+        processingService.process(event);
+
     }
-
-
 }

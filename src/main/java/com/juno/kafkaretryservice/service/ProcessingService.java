@@ -65,7 +65,11 @@ public class ProcessingService {
         request.setStatus(RequestStatus.FAILED);
         request.setUpdatedAt(LocalDateTime.now());
 
-        System.out.println("Processamento falhou definitivamente: " + e.getMessage());
+        System.out.println(
+                ">> Requisição " + request.getAccessionNumber()
+                        + " falhou definitivamente: "
+                        + e.getMessage()
+        );
     }
 
 }
