@@ -2,12 +2,14 @@ package com.juno.kafkaretryservice.service;
 
 import com.juno.kafkaretryservice.domain.Request;
 import com.juno.kafkaretryservice.domain.RequestStatus;
+import com.juno.kafkaretryservice.dto.RequestCreateDTO;
 import com.juno.kafkaretryservice.event.RequestCreatedEvent;
 import com.juno.kafkaretryservice.store.RequestStore;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 
@@ -15,9 +17,11 @@ import java.time.LocalDateTime;
 public class ProcessingService {
 
     private final RequestStore requestStore;
+    private final RestTemplate restTemplate;
 
-    public ProcessingService(RequestStore requestStore) {
+    public ProcessingService(RequestStore requestStore, RestTemplate restTemplate) {
         this.requestStore = requestStore;
+        this.restTemplate = restTemplate;
     }
 
     @Retryable(
@@ -37,7 +41,6 @@ public class ProcessingService {
         System.out.println(
                 ">> Requisição " + request.getAccessionNumber()
                         + " | Tentativa: " + request.getAttempts()
-                        + " | Falha simulada: " + request.isSimulateFailure()
         );
 
         executarProcessamento(request);
@@ -51,9 +54,34 @@ public class ProcessingService {
 
     private void executarProcessamento(Request request) {
 
-        if (request.isSimulateFailure()) {
-            throw new RuntimeException("Erro simulado no processamento");
+        RequestCreateDTO dto = new RequestCreateDTO(
+                request.getAccessionNumber(),
+                request.getStudyDate(),
+                request.getStudyDescription(),
+                request.getModality(),
+                request.getPatientId(),
+                request.getPatientName(),
+                request.getPatientBirthDate(),
+                request.getPatientSex(),
+                request.getReportPdfBase64()
+        );
+
+        String url = "mete a chave da api aqui.";
+
+        RequestCreateDTO response = restTemplate.postForObject(
+                url,
+                dto,
+                RequestCreateDTO.class
+        );
+
+        if (response == null) {
+            throw new RuntimeException("API externa retornou resposta vazia");
         }
+
+        System.out.println(
+                ">> API externa respondeu para a requisição "
+                        + response.accessionNumber()
+        );
     }
 
 

@@ -8,8 +8,7 @@
     "patientName": "PACIENTE TESTE 01",
     "patientBirthDate": "1990-01-01",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0002",
@@ -20,8 +19,7 @@
     "patientName": "PACIENTE TESTE 02",
     "patientBirthDate": "1988-02-02",
     "patientSex": "F",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0003",
@@ -32,8 +30,7 @@
     "patientName": "PACIENTE TESTE 03",
     "patientBirthDate": "1995-03-03",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0004",
@@ -44,8 +41,7 @@
     "patientName": "PACIENTE TESTE 04",
     "patientBirthDate": "1987-04-04",
     "patientSex": "F",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0005",
@@ -56,8 +52,7 @@
     "patientName": "PACIENTE TESTE 05",
     "patientBirthDate": "1992-05-05",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0006",
@@ -68,8 +63,7 @@
     "patientName": "PACIENTE TESTE 06",
     "patientBirthDate": "1993-06-06",
     "patientSex": "F",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0007",
@@ -80,8 +74,7 @@
     "patientName": "PACIENTE TESTE 07",
     "patientBirthDate": "1989-07-07",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0008",
@@ -92,8 +85,7 @@
     "patientName": "PACIENTE TESTE 08",
     "patientBirthDate": "1991-08-08",
     "patientSex": "F",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0009",
@@ -104,8 +96,7 @@
     "patientName": "PACIENTE TESTE RETRY 01",
     "patientBirthDate": "1994-09-09",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": true
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0010",
@@ -116,8 +107,7 @@
     "patientName": "PACIENTE TESTE RETRY 02",
     "patientBirthDate": "1996-10-10",
     "patientSex": "F",
-    "reportPdfBase64": "",
-    "simulateFailure": true
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0011",
@@ -128,8 +118,7 @@
     "patientName": "PACIENTE TESTE 11",
     "patientBirthDate": "1986-11-11",
     "patientSex": "F",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0012",
@@ -140,8 +129,7 @@
     "patientName": "PACIENTE TESTE 12",
     "patientBirthDate": "1997-12-12",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0013",
@@ -152,8 +140,7 @@
     "patientName": "PACIENTE TESTE RETRY 03",
     "patientBirthDate": "1984-01-13",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": true
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0014",
@@ -164,8 +151,7 @@
     "patientName": "PACIENTE TESTE 14",
     "patientBirthDate": "1998-02-14",
     "patientSex": "F",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   },
   {
     "accessionNumber": "TEST-0015",
@@ -176,7 +162,6 @@
     "patientName": "PACIENTE TESTE 15",
     "patientBirthDate": "1999-03-15",
     "patientSex": "M",
-    "reportPdfBase64": "",
-    "simulateFailure": false
+    "reportPdfBase64": ""
   }
 ]
