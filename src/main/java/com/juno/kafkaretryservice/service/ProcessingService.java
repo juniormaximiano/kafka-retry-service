@@ -5,6 +5,9 @@ import com.juno.kafkaretryservice.domain.RequestStatus;
 import com.juno.kafkaretryservice.dto.RequestCreateDTO;
 import com.juno.kafkaretryservice.event.RequestCreatedEvent;
 import com.juno.kafkaretryservice.store.RequestStore;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -15,6 +18,12 @@ import java.time.LocalDateTime;
 
 @Service
 public class ProcessingService {
+
+    private boolean forceFailure = false;
+
+    public void setForceFailure(boolean forceFailure) {
+        this.forceFailure = forceFailure;
+    }
 
     private final RequestStore requestStore;
     private final RestTemplate restTemplate;
@@ -27,7 +36,7 @@ public class ProcessingService {
     @Retryable(
             maxAttempts = 3,
             retryFor = RuntimeException.class,
-            backoff = @Backoff(delay = 10000)
+            backoff = @Backoff(delay = 10000, multiplier = 2)
     )
     public void process(RequestCreatedEvent event) {
 
@@ -66,16 +75,27 @@ public class ProcessingService {
                 request.getReportPdfBase64()
         );
 
-        String url = "mete a chave da api aqui.";
+        String url = "URL_AQUI";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String responseCode = forceFailure ? "500" : "200";
+        headers.set("x-mock-response-code", responseCode);
+
+        HttpEntity<RequestCreateDTO> entity =
+                new HttpEntity<>(dto, headers);
 
         RequestCreateDTO response = restTemplate.postForObject(
                 url,
-                dto,
+                entity,
                 RequestCreateDTO.class
         );
 
         if (response == null) {
-            throw new RuntimeException("API externa retornou resposta vazia");
+            throw new RuntimeException(
+                    "API externa retornou resposta vazia"
+            );
         }
 
         System.out.println(

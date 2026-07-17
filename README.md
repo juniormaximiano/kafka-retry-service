@@ -8,6 +8,8 @@ Durante o processamento, a aplicação realiza um `POST` para uma API externa.
 
 Caso a integração externa responda com erro HTTP, o `RestTemplate` propaga a falha para o fluxo de processamento. O `@Retryable` realiza novas tentativas automaticamente e, caso todas sejam esgotadas, o `@Recover` atualiza a requisição para o estado `FAILED`.
 
+Além disso, sempre que uma nova requisição é recebida, a aplicação verifica se existem requisições com status `FAILED`. Caso existam, elas são redefinidas como `PENDING`, têm o número de tentativas zerado e são publicadas novamente no Kafka para reprocessamento.
+
 ---
 
 # 🎯 Objetivo da POC
@@ -69,7 +71,9 @@ O foco está em demonstrar:
 * controle de status;
 * retry automático;
 * tratamento de erros HTTP;
-* tratamento de falha definitiva.
+* tratamento de falha definitiva;
+* reprocessamento automático de requisições `FAILED`;
+* simulação controlada de falha através de endpoint de teste.
 
 ---
 
@@ -216,7 +220,8 @@ src/main/java/com/juno/kafkaretryservice
 │   └── RequestConsumer.java
 │
 ├── controller
-│   └── RequestController.java
+│   ├── RequestController.java
+│   └── TestController.java
 │
 ├── domain
 │   ├── Request.java
@@ -232,6 +237,7 @@ src/main/java/com/juno/kafkaretryservice
 │   └── RequestProducer.java
 │
 ├── service
+│   ├── FailedRequestReprocessingService.java
 │   ├── RequestService.java
 │   └── ProcessingService.java
 │
@@ -517,7 +523,7 @@ Configuração da POC:
 @Retryable(
     maxAttempts = 3,
     retryFor = RuntimeException.class,
-    backoff = @Backoff(delay = 10000)
+    backoff = @Backoff(delay = 10000, multiplier = 2)
 )
 ```
 
@@ -530,7 +536,7 @@ Exceção que gera retry:
 RuntimeException
 
 Intervalo entre tentativas:
-10 segundos
+10 segundos na primeira espera, com multiplicador exponencial `2`
 ```
 
 O retry só acontece quando ocorre uma exceção.
@@ -766,6 +772,84 @@ FAILED
 
 ---
 
+# ♻️ Reprocessamento automático de requisições `FAILED`
+
+Antes de criar uma nova Request, o `RequestService` consulta o armazenamento em memória para localizar requisições com status `FAILED`.
+
+```text
+Novo POST /requests
+        ↓
+Consulta RequestStore
+        ↓
+Existem Requests FAILED?
+        ↓
+      SIM
+        ↓
+status = PENDING
+attempts = 0
+updatedAt = agora
+        ↓
+Novo RequestCreatedEvent
+        ↓
+Publicação no Kafka
+        ↓
+Nova tentativa de processamento
+```
+
+O serviço responsável por essa lógica é o `FailedRequestReprocessingService`. Para cada requisição falhada, a aplicação redefine o status para `PENDING`, zera as tentativas, atualiza `updatedAt`, cria um novo evento e publica novamente no Kafka.
+
+Quando não existem requisições falhadas:
+
+```text
+>> Verificação automática: 0 requisição(ões) FAILED
+```
+
+Quando existem requisições falhadas:
+
+```text
+>> Verificação automática: 1 requisição(ões) FAILED
+>> Reprocessando requisição: FAILED-TEST-001
+```
+
+---
+
+# 🧪 Controle do modo de falha
+
+Para demonstrar os cenários sem reiniciar a aplicação, a POC possui um modo de falha controlado em tempo de execução.
+
+```java
+private boolean forceFailure = false;
+```
+
+Durante a chamada ao Postman Mock Server:
+
+```java
+String responseCode = forceFailure ? "500" : "200";
+headers.set("x-mock-response-code", responseCode);
+```
+
+O modo é alterado pelo endpoint:
+
+```http
+PATCH /test/failure/{enabled}
+```
+
+Ativar:
+
+```http
+PATCH /test/failure/true
+```
+
+Desativar:
+
+```http
+PATCH /test/failure/false
+```
+
+Como o valor é lido novamente em cada tentativa, é possível falhar na primeira tentativa, desativar o modo durante o backoff e obter sucesso na tentativa seguinte.
+
+---
+
 # 🌐 Endpoints
 
 ## Criar uma requisição
@@ -796,6 +880,21 @@ GET /requests
 
 ```http
 GET /requests/{id}
+```
+
+---
+
+## Ativar ou desativar o modo de falha
+
+```http
+PATCH /test/failure/{enabled}
+```
+
+Exemplos:
+
+```http
+PATCH /test/failure/true
+PATCH /test/failure/false
 ```
 
 ---
@@ -861,7 +960,8 @@ No Swagger é possível:
 * listar requisições;
 * consultar por UUID;
 * acompanhar o status;
-* acompanhar o número de tentativas.
+* acompanhar o número de tentativas;
+* ativar ou desativar o modo de falha.
 
 ---
 
@@ -926,7 +1026,7 @@ Service
 
 ## `RequestService`
 
-Responsável pela criação da Request e início do fluxo.
+Responsável por verificar requisições `FAILED`, iniciar o reprocessamento e criar novas Requests.
 
 ```text
 Cria Request
@@ -962,9 +1062,15 @@ Responsável por consumir eventos do Kafka e delegar o processamento.
 
 ---
 
+## `FailedRequestReprocessingService`
+
+Responsável por localizar requisições `FAILED`, restaurar seu estado e republicar seus eventos no Kafka.
+
+---
+
 ## `ProcessingService`
 
-Responsável pelo processamento e integração HTTP.
+Responsável pelo processamento, integração HTTP e controle do modo de falha.
 
 Contém:
 
@@ -972,7 +1078,14 @@ Contém:
 RestTemplate
 @Retryable
 @Recover
+forceFailure
 ```
+
+---
+
+## `TestController`
+
+Responsável por ativar ou desativar o modo de falha durante a demonstração.
 
 ---
 
@@ -1156,6 +1269,27 @@ Em produção, o armazenamento em memória poderia ser substituído por uma solu
 
 ---
 
+# 🎬 Roteiro de demonstração do reprocessamento
+
+1. Ative o modo de falha com `PATCH /test/failure/true`.
+2. Envie um `POST /requests`.
+3. Aguarde três tentativas e confirme o status `FAILED` em `GET /requests`.
+4. Desative o modo com `PATCH /test/failure/false`.
+5. Envie um novo `POST /requests`.
+6. A requisição antiga será localizada, reenviada ao Kafka e processada novamente.
+7. Confirme que a requisição antiga passou para `SUCCESSFUL`.
+
+Exemplo de logs:
+
+```text
+>> Verificação automática: 1 requisição(ões) FAILED
+>> Reprocessando requisição: FAILED-TEST-001
+>> Requisição FAILED-TEST-001 | Tentativa: 1
+>> API externa respondeu para a requisição FAILED-TEST-001
+```
+
+---
+
 # ✅ Status da POC
 
 * ✅ API REST funcionando.
@@ -1177,6 +1311,10 @@ Em produção, o armazenamento em memória poderia ser substituído por uma solu
 * ✅ `@Recover` funcionando.
 * ✅ Cenário de sucesso.
 * ✅ Fluxo preparado para erros HTTP.
+* ✅ Reprocessamento automático de requisições `FAILED`.
+* ✅ Republicação de eventos no Kafka.
+* ✅ Modo de falha controlado por endpoint.
+* ✅ Alteração do comportamento sem reiniciar a aplicação.
 * ✅ Processamento em lote.
 * ✅ Swagger para demonstração.
 * ✅ Postman Mock Server para integração externa.
