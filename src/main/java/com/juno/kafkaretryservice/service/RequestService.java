@@ -31,37 +31,13 @@ public class RequestService {
 
     public Request createRequest(RequestCreateDTO dto) {
 
-        List<Request> failedRequests = requestStore.findAll()
+        boolean hasFailedRequests = requestStore.findAll()
                 .stream()
-                .filter(request -> request.getStatus() == RequestStatus.FAILED)
-                .toList();
+                .anyMatch(request -> request.getStatus() == RequestStatus.FAILED);
 
-        System.out.println("\n========================================");
-        System.out.println(">> NOVO POST RECEBIDO");
-        System.out.println(">> FAILED encontradas: " + failedRequests.size());
-        System.out.println("========================================\n");
-
-
-
-        failedRequests.forEach(request -> {
-
-            request.setStatus(RequestStatus.PENDING);
-            request.setAttempts(0);
-            request.setUpdatedAt(LocalDateTime.now());
-
-            RequestCreatedEvent failedEvent = new RequestCreatedEvent(
-                    request.getId(),
-                    request.getAccessionNumber(),
-                    request.getPatientId()
-            );
-
-            requestProducer.send(failedEvent);
-
-            System.out.println(
-                    ">> Reprocessando requisição: "
-                            + request.getAccessionNumber()
-            );
-        });
+        if (hasFailedRequests) {
+            reprocessingService.reprocessFailedRequests();
+        }
 
         Request request = new Request(
                 dto.accessionNumber(),
@@ -87,6 +63,9 @@ public class RequestService {
 
         return savedRequest;
     }
+
+
+
     public Request findById(UUID id) {
         return requestStore.findById(id);
     }

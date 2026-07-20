@@ -12,6 +12,9 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
@@ -35,8 +38,14 @@ public class ProcessingService {
 
     @Retryable(
             maxAttempts = 3,
-            retryFor = RuntimeException.class,
-            backoff = @Backoff(delay = 10000, multiplier = 2)
+            retryFor = {
+                    HttpServerErrorException.class,
+                    ResourceAccessException.class
+            },
+            noRetryFor = {
+                    HttpClientErrorException.BadRequest.class
+            },
+            backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     public void process(RequestCreatedEvent event) {
 
